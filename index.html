@@ -223,6 +223,21 @@ button{
   12%{opacity:1}
   100%{transform:translate(var(--x),var(--y)) scale(1.35) rotate(var(--r));opacity:0}
 }
+
+/* 날짜 입력 달력 아이콘 가시성 개선 */
+input[type="date"]{
+  color-scheme: light;
+}
+input[type="date"]::-webkit-calendar-picker-indicator{
+  opacity:1;
+  cursor:pointer;
+  filter:brightness(0) saturate(100%) invert(57%) sepia(8%) saturate(430%) hue-rotate(350deg) brightness(88%) contrast(86%);
+  width:18px;
+  height:18px;
+  padding:2px;
+}
+
+
 </style>
 </head>
 <body>
