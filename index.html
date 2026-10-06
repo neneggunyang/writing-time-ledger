@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>집필시간 회수장부</title>
+<style>
+*{box-sizing:border-box}
+:root{
+  --deep:#07171c;
+  --deep2:#0b252d;
+  --panel:#102c34;
+  --panel2:#153943;
+  --line:#35636a;
+  --jade:#58b7aa;
+  --jade2:#8dd6c9;
+  --gold:#d9b56d;
+  --gold2:#f1d99a;
+  --cream:#eee5d2;
+  --muted:#9db5b6;
+  --danger:#c95b54;
+  --danger2:#f18a77;
+}
+html{min-height:100%;background:#061116}
+body{
+  margin:0;
+  color:var(--cream);
+  font-family:"Batang","Noto Serif KR","Malgun Gothic",serif;
+  background:
+    radial-gradient(ellipse at 50% -10%,rgba(64,174,162,.22),transparent 40%),
+    radial-gradient(ellipse at 15% 75%,rgba(19,92,105,.16),transparent 35%),
+    linear-gradient(180deg,#07171c 0%,#092229 52%,#061116 100%);
+  min-height:100vh;
+}
+body:before{
+  content:"";
+  position:fixed;inset:0;pointer-events:none;opacity:.14;
+  background:
+    repeating-radial-gradient(ellipse at 50% 110%,transparent 0 18px,rgba(141,214,201,.35) 19px 20px,transparent 21px 34px);
+  mask-image:linear-gradient(to top,black,transparent 55%);
+}
+.wrap{max-width:740px;margin:20px auto;padding:0 14px 54px}
+h1{
+  text-align:center;font-size:38px;margin:12px 0 2px;
+  color:var(--gold2);letter-spacing:2px;
+  text-shadow:0 2px 14px rgba(217,181,109,.25);
+}
+.sub{
+  text-align:center;color:var(--jade2);font-weight:bold;
+  margin:0 0 20px;font-size:14px;letter-spacing:.5px;
+}
+.sub:before,.sub:after{content:"  ◇  ";color:var(--gold)}
+.card{
+  position:relative;
+  background:linear-gradient(145deg,rgba(18,55,64,.94),rgba(7,27,34,.97));
+  border:1px solid #46757a;
+  border-radius:5px;
+  padding:19px;
+  margin:14px 0;
+  box-shadow:0 7px 24px rgba(0,0,0,.28),inset 0 0 30px rgba(82,180,168,.035);
+}
+.card:before,.card:after{
+  position:absolute;color:var(--gold);font-size:15px;opacity:.85;
+}
+.card:before{content:"◆";top:6px;left:9px}.card:after{content:"◆";bottom:6px;right:9px}
+h2{
+  font-size:18px;margin:0 0 14px;color:var(--gold2);
+  letter-spacing:.5px;border-bottom:1px solid rgba(217,181,109,.25);
+  padding-bottom:8px;
+}
+h2:before{content:"龍";color:var(--jade2);font-size:14px;margin-right:7px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+input,button{font:inherit;font-family:"Batang","Noto Serif KR","Malgun Gothic",serif}
+input{
+  width:100%;padding:10px;border:1px solid #3f6970;border-radius:4px;
+  background:#07171c;color:var(--cream)
+}
+input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 2px rgba(217,181,109,.13)}
+button{
+  border:1px solid rgba(217,181,109,.42);border-radius:4px;
+  padding:10px 14px;cursor:pointer;font-weight:bold;letter-spacing:.2px
+}
+.primary{background:linear-gradient(#326f69,#1d514d);color:#fff0cf}
+.secondary{background:#183940;color:#e6ddca;border-color:#477077}
+.danger{background:#562c30;color:#ffd0c5;border-color:#8d4a4d}
+.actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.stat{
+  text-align:center;background:rgba(22,61,69,.72);
+  border:1px solid #3c686d;border-radius:4px;padding:14px 10px
+}
+.stat small{color:#a9c0bd}.num{font-size:24px;font-weight:bold;margin-top:4px;color:#eee4d0}
+.stat.alert{background:linear-gradient(145deg,#422126,#29171a);border:1px solid #9c4a4d}
+.stat.alert small,.stat.alert .num{color:var(--danger2)}
+.stat.alert .num{font-size:32px}
+.today{
+  text-align:center;background:rgba(20,59,68,.72);
+  border:1px solid #3c686d;border-radius:4px;padding:17px
+}
+.big{font-size:22px;font-weight:600;margin:4px;color:#87aaa9}
+.today-total{
+  margin-top:10px;padding:16px 10px;background:#07171c;
+  border:1px solid #a4814a;border-radius:4px;
+  box-shadow:inset 0 0 20px rgba(217,181,109,.05)
+}
+.today-total small{display:block;color:var(--gold);font-size:14px;font-weight:bold;margin-bottom:3px}
+.today-total .total-num{
+  font-size:43px;font-weight:900;color:var(--gold2);line-height:1.15;
+  text-shadow:0 0 15px rgba(217,181,109,.15)
+}
+.result{
+  margin-top:12px;padding:15px;background:rgba(20,59,68,.68);
+  border-radius:4px;line-height:1.7;border:1px solid #3c686d
+}
+.result .plan-total{
+  display:block;margin-top:10px;padding:12px;background:#07171c;
+  border:1px solid #a4814a;border-radius:4px;text-align:center;
+  font-size:29px;font-weight:900;color:var(--gold2)
+}
+.pomo-summary{
+  margin-top:12px;padding:13px;background:rgba(20,59,68,.7);
+  border-radius:4px;text-align:center;color:#b6c7c5;border:1px solid #345d62
+}
+.pomo-summary strong{color:var(--gold2)}
+.pomo-list{margin-top:14px}
+.pomo-item{
+  display:flex;align-items:center;gap:11px;padding:11px 10px;
+  border-bottom:1px solid #31575c;min-height:48px
+}
+.pomo-item:last-child{border-bottom:0}
+.pomo-item input{width:22px;height:22px;flex:0 0 22px;accent-color:#d0a95f}
+.pomo-item label{margin:0;font-size:15px;color:#ded8ca;cursor:pointer;flex:1}
+.pomo-item.done label{text-decoration:line-through;color:#6e7e7f}
+.pomo-item.done{background:rgba(13,44,51,.7)}
+.pomo-minutes{font-size:13px;color:#91a8a8;white-space:nowrap}
+.pomo-empty{text-align:center;color:#9aaead;padding:14px 4px}
+.row{
+  display:grid;grid-template-columns:1fr 100px 60px;gap:8px;
+  align-items:center;padding:8px 0;border-bottom:1px solid #31575c
+}
+.row:last-child{border-bottom:0}
+.empty{text-align:center;color:#8da1a1;padding:12px}
+@media(max-width:560px){
+  .grid,.stats{grid-template-columns:1fr}
+  .row{grid-template-columns:1fr 90px 55px}
+  .row button{padding:8px 5px;font-size:12px}
+  h1{font-size:32px}
+}
+.celebrate{
+  position:fixed;inset:0;pointer-events:none;display:flex;
+  align-items:center;justify-content:center;z-index:9999;
+  overflow:hidden;background:radial-gradient(circle,rgba(24,125,120,.22),transparent 48%);
+  animation:seaCelebrate 4.8s ease-out forwards
+}
+.celebrate:before{
+  content:"";position:absolute;inset:-30%;
+  background:
+    repeating-radial-gradient(ellipse at 50% 110%,transparent 0 42px,rgba(110,214,199,.20) 43px 47px,transparent 48px 78px),
+    repeating-radial-gradient(ellipse at 50% 120%,transparent 0 68px,rgba(64,167,164,.13) 69px 73px,transparent 74px 118px);
+  animation:wave 4.2s ease-out forwards
+}
+.celebrate .msg{
+  position:relative;z-index:4;
+  background:linear-gradient(145deg,rgba(8,35,42,.97),rgba(5,20,25,.98));
+  border:3px double var(--gold);
+  border-radius:10px;padding:28px 22px;box-sizing:border-box;
+  width:min(520px,calc(100vw - 32px));max-width:520px;min-width:0;
+  color:var(--gold2);
+  font-size:clamp(18px,5.5vw,30px);line-height:1.5;word-break:keep-all;overflow-wrap:break-word;
+  font-weight:900;letter-spacing:.5px;text-align:center;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  box-shadow:0 0 0 8px rgba(217,181,109,.08),0 0 55px rgba(75,190,180,.35);
+  text-shadow:0 0 14px rgba(241,217,154,.25);
+  animation:dragonMessage 4.2s cubic-bezier(.17,.84,.31,1.2) forwards
+}
+.celebrate .event-line{display:block;position:static;width:100%;white-space:normal;text-align:center}
+.celebrate .event-gap{display:block;position:static;height:18px;width:100%;flex:none}
+.celebrate .msg:before,.celebrate .msg:after{
+  content:"龍";position:absolute;color:var(--jade2);font-size:32px;top:50%;transform:translateY(-50%)
+}
+.celebrate .msg:before{left:-46px}.celebrate .msg:after{right:-46px}
+.celebrate > span{
+  position:absolute;z-index:3;font-size:clamp(22px,5vw,46px);
+  animation:dragonBurst 4.0s cubic-bezier(.1,.7,.2,1) forwards
+}
+@keyframes seaCelebrate{
+  0%{opacity:0}12%{opacity:1}75%{opacity:1}100%{opacity:0}
+}
+@keyframes dragonMessage{
+  0%{opacity:0;transform:scale(.45) translateY(25px);filter:blur(6px)}
+  35%{opacity:1;transform:scale(1.12) translateY(0);filter:blur(0)}
+  55%{transform:scale(.98)}
+  100%{opacity:0;transform:scale(1.05) translateY(-8px)}
+}
+@keyframes wave{
+  0%{transform:scale(.2);opacity:0}
+  20%{opacity:1}
+  100%{transform:scale(2.4);opacity:0}
+}
+.celebrate:after{
+  content:"~~~~~~  ≋≋≋  ~~~~~~  ≋≋≋  ~~~~~~";
+  position:absolute;
+  left:-20%;right:-20%;bottom:8%;
+  color:rgba(141,214,201,.38);
+  font-family:serif;
+  font-size:clamp(24px,6vw,58px);
+  letter-spacing:12px;
+  white-space:nowrap;
+  transform:rotate(-3deg);
+  animation:oceanRoll 4.5s ease-in-out forwards;
+  text-shadow:0 0 14px rgba(86,197,187,.3);
+}
+@keyframes oceanRoll{
+  0%{transform:translateX(-18%) rotate(-3deg);opacity:0}
+  18%{opacity:1}
+  50%{transform:translateX(8%) rotate(2deg);opacity:.9}
+  100%{transform:translateX(-8%) rotate(-2deg);opacity:0}
+}
+
+@keyframes dragonBurst{
+  0%{transform:translate(0,0) scale(.2) rotate(0);opacity:0}
+  12%{opacity:1}
+  100%{transform:translate(var(--x),var(--y)) scale(1.35) rotate(var(--r));opacity:0}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>🐉 집필시간 회수장부</h1>
+<div class="sub">해룡파 청산부의 명령이다, 집필이 또 밀리면 바다에 던져버린다?</div>
+
+<section class="card">
+<h2>해룡파 청산부 기본 설정</h2>
+<div class="grid">
+<div><label>하루 최소 작업량 (시간)</label><input id="goal" type="number" min="0" step=".5" value="1"></div>
+<div><label>청산 시작일</label><input id="start" type="date"></div>
+</div>
+<div class="actions"><button class="primary" onclick="settings()">기준 박아두기</button><button class="secondary" onclick="todayStart()">오늘부터 시작</button></div>
+</section>
+
+<section class="card">
+<h2>현재 해역 청산 현황</h2>
+<div class="stats">
+<div class="stat"><small>누적 의무량</small><div class="num" id="tg">0h</div></div>
+<div class="stat"><small>실제 처리량</small><div class="num" id="tw">0h</div></div>
+<div class="stat alert"><small>🚨 현재 미납</small><div class="num" id="debt">0h</div></div>
+</div>
+</section>
+
+<section class="card">
+<h2>오늘</h2>
+<div class="today"><div style="font-size:13px;color:#a89586">오늘 기본 할당량 <span id="todayGoal">1시간</span></div><div class="today-total"><small>청산 후 오늘 바쳐야 할 글쓰기</small><div class="total-num" id="todayTotal">1시간</div></div><div id="todayStatus">아직 처리 내역이 없어.</div></div>
+</section>
+
+<section class="card">
+<h2>용궁파 미납 회수 작전</h2>
+<div class="grid">
+<div><label>미납을 털어낼 기간 (일)</label><input id="days" type="number" min="1" step="1" value="5" oninput="renderPlan()"></div>
+<div><label>하루 추가 처리량</label><input id="extra" readonly></div>
+</div>
+<div class="result" id="plan"></div>
+</section>
+
+<section class="card">
+<h2>오늘의 항해 장부</h2>
+<div class="pomo-summary" id="pomoSummary">용궁파 미납 회수 작전을 세우면 오늘의 항해 장부 목록이 자동으로 만들어집니다.</div>
+<div class="pomo-list" id="pomoList"></div>
+<div class="actions">
+<button class="secondary" type="button" onclick="rebuildPomo()">🔄 항해 계획 다시 짜기</button>
+<button class="danger" type="button" onclick="resetPomo()">오늘 장부 초기화</button>
+</div>
+</section>
+
+
+
+
+</div>
+
+<script>
+const KEY="writing-settler-v1";
+let data=JSON.parse(localStorage.getItem(KEY)||'{"goal":1,"start":"","records":{}}');
+const today=()=>{let d=new Date();d=new Date(d-d.getTimezoneOffset()*60000);return d.toISOString().slice(0,10)};
+const fmt=n=>{n=Math.max(0,Number(n)||0);return Number.isInteger(n)?String(n):n.toFixed(1).replace(/\.0$/,"")};
+function calc(){
+ const g=Number(data.goal)||0,s=data.start||today(),t=today();let target=0,written=0;
+ if(s<=t&&g){let a=new Date(s+"T00:00:00"),b=new Date(t+"T00:00:00");target=(Math.floor((b-a)/86400000)+1)*g}
+ Object.values(data.records).forEach(v=>written+=Number(v)||0);
+ return {g,target,written,debt:Math.max(0,target-written)}
+}
+function save(){localStorage.setItem(KEY,JSON.stringify(data))}
+function settings(){data.goal=Math.max(0,Number(goal.value)||0);data.start=start.value||today();save();render()}
+function todayStart(){start.value=today()}
+function record(){let d=date.value||today();data.records[d]=Math.max(0,Number(hours.value)||0);save();render()}
+function del(d){delete data.records[d];save();render()}
+function clearRecords(){if(confirm("모든 글쓰기 기록을 지울까요?")){data.records={};save();render()}}
+function renderPlan(){
+ let c=calc(),n=Math.max(1,Number(days.value)||1),e=c.debt/n;
+ extra.value=fmt(e)+"시간";
+ plan.innerHTML=c.debt<=0?"<b>미납 없어. 제법 깔끔하게 처리했네. 👏</b><br>이제 하루 기본량만 지키면 돼. 🎉":
+ "<b>"+fmt(c.debt)+"시간</b>을 "+n+"일 동안 갚으려면<br>하루에 평균 <b>"+fmt(e)+"시간</b>을 기본량에 추가해서 처리해.<span class=\"plan-total\">하루 총 처리량<br>"+fmt(c.g+e)+"시간</span>";
+}
+function getPomoGoalMinutes(){
+ const c=calc();
+ const n=Math.max(1,Number(document.getElementById("days").value)||1);
+ return Math.max(0,Math.round((c.g+(c.debt/n))*60));
+}
+function getPomoKey(){
+ return "pomo-"+today()+"-goal-"+getPomoGoalMinutes();
+}
+function getPomoDone(){
+ try{return JSON.parse(localStorage.getItem(getPomoKey())||"[]")}catch(e){return []}
+}
+function setPomoDone(arr){
+ localStorage.setItem(getPomoKey(),JSON.stringify(arr));
+}
+function clearOldPomoForToday(){
+ const prefix="pomo-"+today()+"-goal-";
+ Object.keys(localStorage).forEach(k=>{if(k.startsWith(prefix))localStorage.removeItem(k)});
+}
+function resetPomo(){
+ if(confirm("오늘의 항해 장부 체크 목록을 처음부터 다시 만들까요?")){
+   localStorage.removeItem(getPomoKey());
+   renderPomodoro(getPomoGoalMinutes()/60);
+ }
+}
+function rebuildPomo(){
+ clearOldPomoForToday();
+ render();
+}
+function renderPomodoro(totalHours){
+ const list=document.getElementById("pomoList");
+ const summary=document.getElementById("pomoSummary");
+ const totalMinutes=Math.max(0,Math.round(totalHours*60));
+ const count=Math.ceil(totalMinutes/30);
+ const done=getPomoDone().filter(i=>Number.isInteger(i)&&i>=0&&i<count);
+ const doneMinutes=done.reduce((sum,i)=>sum+Math.min(30,Math.max(0,totalMinutes-i*30)),0);
+ const remain=Math.max(0,totalMinutes-doneMinutes);
+
+ if(totalMinutes<=0){
+   summary.innerHTML="<strong>오늘 정산할 글쓰기 시간이 없습니다.</strong>";
+   list.innerHTML='<div class="pomo-empty">👏🎉 🐉🌊 청산 완료! 오늘의 빚은 심해 끝까지 가라앉혔어! 🌊🐉 🎉👏</div>';
+   return;
+ }
+
+ summary.innerHTML="<strong>"+fmt(remain/60)+"시간</strong> 남았소 · "+done.length+"/"+count+"회 처리 완료";
+
+ let rows="";
+ for(let i=0;i<count;i++){
+   const mins=Math.min(30,totalMinutes-i*30);
+   const checked=done.includes(i);
+   rows+=`<div class="pomo-item ${checked?"done":""}">
+     <input type="checkbox" id="pomo-${i}" ${checked?"checked":""} onchange="togglePomo(${i})">
+     <label for="pomo-${i}">${i+1}번째 작업</label>
+     <span class="pomo-minutes">${mins}분</span>
+   </div>`;
+ }
+ list.innerHTML=rows;
+}
+
+function celebrate(){
+ const old=document.querySelector('.celebrate'); if(old) old.remove();
+ const box=document.createElement('div'); box.className='celebrate';
+ box.innerHTML='<div class="msg"><span class="event-line">🌊 오늘의 할당량 다 조졌다 🌊</span><span class="event-gap"></span><span class="event-line">🐉 완전 찢었다 🐉</span></div>';
+ const emojis=['👏','🎉','💥','👏','🎊','🔥','🎉','💥'];
+ emojis.forEach((e,i)=>{const sp=document.createElement('span');sp.textContent=e;sp.style.setProperty('--x',(Math.random()*80-40)+'vw');sp.style.setProperty('--y',(Math.random()*70-35)+'vh');sp.style.left='50%';sp.style.top='50%';sp.style.animationDelay=(i*.05)+'s';box.appendChild(sp)});
+ document.body.appendChild(box); setTimeout(()=>box.remove(),5000);
+}
+function togglePomo(index){
+ const totalHours=getPomoGoalMinutes()/60;
+ const totalMinutes=Math.max(0,Math.round(totalHours*60));
+ const count=Math.ceil(totalMinutes/30);
+ let done=getPomoDone().filter(i=>Number.isInteger(i)&&i>=0&&i<count);
+ if(done.includes(index)) done=done.filter(i=>i!==index);
+ else done.push(index);
+ setPomoDone(done);
+ renderPomodoro(totalHours);
+ if(done.length===count && count>0) celebrate();
+}
+function render(){
+ let c=calc();tg.textContent=fmt(c.target)+"h";tw.textContent=fmt(c.written)+"h";debt.textContent=fmt(c.debt)+"h";
+ todayGoal.textContent=fmt(c.g)+"시간";
+ let planDays=Math.max(1,Number(days.value)||1),extraToday=c.debt/planDays;
+ todayTotal.textContent=fmt(c.g+extraToday)+"시간";
+ let w=Number(data.records[today()])||0;
+ todayStatus.textContent=w===0?"오늘 아직 처리 내역이 없어.":w>=c.g?"오늘 "+fmt(w)+"시간 처리 완료. 기본 할당량은 털었소!":"오늘 "+fmt(w)+"시간 처리했어 · "+fmt(c.g-w)+"시간 더 처리해야 해.";
+ history.innerHTML=Object.keys(data.records).sort().reverse().map(d=>'<div class="row"><div>'+d+'</div><div>'+fmt(data.records[d])+'시간</div><button class="danger" onclick="del(\''+d+'\')">삭제</button></div>').join("")||'<div class="empty">아직 처리 기록이 없어.</div>';
+ renderPlan();
+ let todayPlan=c.g+(c.debt/Math.max(1,Number(days.value)||1));
+ renderPomodoro(todayPlan);
+}
+goal.value=data.goal||1;start.value=data.start||today();date.value=today();render();
+</script>
+</body></html>
