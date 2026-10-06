@@ -223,21 +223,6 @@ button{
   12%{opacity:1}
   100%{transform:translate(var(--x),var(--y)) scale(1.35) rotate(var(--r));opacity:0}
 }
-
-/* 날짜 입력 달력 아이콘 가시성 개선 */
-input[type="date"]{
-  color-scheme: light;
-}
-input[type="date"]::-webkit-calendar-picker-indicator{
-  opacity:1;
-  cursor:pointer;
-  filter:brightness(0) saturate(100%) invert(57%) sepia(8%) saturate(430%) hue-rotate(350deg) brightness(88%) contrast(86%);
-  width:18px;
-  height:18px;
-  padding:2px;
-}
-
-
 </style>
 </head>
 <body>
@@ -269,7 +254,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{
 </section>
 
 <section class="card">
-<h2>용궁파 미납 회수 작전</h2>
+<h2>해룡파 미납 회수 작전</h2>
 <div class="grid">
 <div><label>미납을 털어낼 기간 (일)</label><input id="days" type="number" min="1" step="1" value="5" oninput="renderPlan()"></div>
 <div><label>하루 추가 처리량</label><input id="extra" readonly></div>
@@ -279,7 +264,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{
 
 <section class="card">
 <h2>오늘의 항해 장부</h2>
-<div class="pomo-summary" id="pomoSummary">용궁파 미납 회수 작전을 세우면 오늘의 항해 장부 목록이 자동으로 만들어집니다.</div>
+<div class="pomo-summary" id="pomoSummary">해룡파 미납 회수 작전을 세우면 오늘의 항해 장부 목록이 자동으로 만들어집니다.</div>
 <div class="pomo-list" id="pomoList"></div>
 <div class="actions">
 <button class="secondary" type="button" onclick="rebuildPomo()">🔄 항해 계획 다시 짜기</button>
