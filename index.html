@@ -84,7 +84,7 @@ button{
 .primary{background:linear-gradient(#326f69,#1d514d);color:#fff0cf}
 .secondary{background:#183940;color:#e6ddca;border-color:#477077}
 .danger{background:#562c30;color:#ffd0c5;border-color:#8d4a4d}
-.actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;justify-content:center}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
 .stat{
   text-align:center;background:rgba(22,61,69,.72);
@@ -135,6 +135,18 @@ button{
 .pomo-item.done{background:rgba(13,44,51,.7)}
 .pomo-minutes{font-size:13px;color:#91a8a8;white-space:nowrap}
 .pomo-empty{text-align:center;color:#9aaead;padding:14px 4px}
+.pomo-cheer{
+  margin-top:10px;padding:33px 10px;
+  background:rgba(22,61,69,.58);
+  border:1px solid rgba(217,181,109,.35);
+  border-radius:4px;
+  text-align:center;
+  color:var(--gold2);
+  font-weight:bold;
+  line-height:1.5;
+  display:flex;align-items:center;justify-content:center;
+  min-height:96px;
+}
 .row{
   display:grid;grid-template-columns:1fr 100px 60px;gap:8px;
   align-items:center;padding:8px 0;border-bottom:1px solid #31575c
@@ -236,7 +248,7 @@ button{
 <div><label>하루 최소 작업량 (시간)</label><input id="goal" type="number" min="0" step=".5" value="1"></div>
 <div><label>청산 시작일</label><input id="start" type="date"></div>
 </div>
-<div class="actions"><button class="primary" onclick="settings()">기준 박아두기</button><button class="secondary" onclick="todayStart()">오늘부터 시작</button></div>
+<div class="actions"><button class="primary" onclick="settings()">🔨 기준 박아두기</button><button class="secondary" onclick="todayStart()">오늘부터 시작</button></div>
 </section>
 
 <section class="card">
@@ -283,10 +295,23 @@ let data=JSON.parse(localStorage.getItem(KEY)||'{"goal":1,"start":"","records":{
 const today=()=>{let d=new Date();d=new Date(d-d.getTimezoneOffset()*60000);return d.toISOString().slice(0,10)};
 const fmt=n=>{n=Math.max(0,Number(n)||0);return Number.isInteger(n)?String(n):n.toFixed(1).replace(/\.0$/,"")};
 function calc(){
- const g=Number(data.goal)||0,s=data.start||today(),t=today();let target=0,written=0;
- if(s<=t&&g){let a=new Date(s+"T00:00:00"),b=new Date(t+"T00:00:00");target=(Math.floor((b-a)/86400000)+1)*g}
+ const g=Number(data.goal)||0,s=data.start||today(),t=today();let target=0,written=0,debt=0;
+ if(s<=t&&g){
+   let a=new Date(s+"T00:00:00"),b=new Date(t+"T00:00:00");
+   target=(Math.floor((b-a)/86400000)+1)*g;
+   const yesterday=new Date(b);
+   yesterday.setDate(yesterday.getDate()-1);
+   let yesterdayTarget=0,yesterdayWritten=0;
+   if(a<=yesterday){
+     yesterdayTarget=(Math.floor((yesterday-a)/86400000)+1)*g;
+     Object.entries(data.records).forEach(([d,v])=>{
+       if(d<=yesterday.toISOString().slice(0,10)) yesterdayWritten+=Number(v)||0;
+     });
+     debt=Math.max(0,yesterdayTarget-yesterdayWritten);
+   }
+ }
  Object.values(data.records).forEach(v=>written+=Number(v)||0);
- return {g,target,written,debt:Math.max(0,target-written)}
+ return {g,target,written,debt}
 }
 function save(){localStorage.setItem(KEY,JSON.stringify(data))}
 function settings(){data.goal=Math.max(0,Number(goal.value)||0);data.start=start.value||today();save();render()}
@@ -356,6 +381,22 @@ function renderPomodoro(totalHours){
    </div>`;
  }
  list.innerHTML=rows;
+
+ const oldCheer=document.getElementById("pomoCheer");
+ if(oldCheer) oldCheer.remove();
+
+ if(done.length>0){
+   const cheerMessages=[
+     "🔥 30분 해냈다! 잘했어, 진짜 잘했어! 👏",
+     "🐉 한 판 끝냈다! 이 정도면 해룡파도 인정이야! 🌊",
+     "✍️ 30분 회수 완료! 오늘의 너 꽤 멋진데? 😎",
+     "💪 또 하나 털었다! 계속 이렇게 가보자! 🔥",
+     "🎉 30분 클리어! 너 지금 제대로 하고 있어! 👏",
+     "🌊 한 덩이 건졌다! 아주 잘하고 있어! 🐉"
+   ];
+   const msg=cheerMessages[(done.length-1)%cheerMessages.length];
+   list.insertAdjacentHTML("afterend",`<div class="pomo-cheer" id="pomoCheer">${msg}</div>`);
+ }
 }
 
 function celebrate(){
