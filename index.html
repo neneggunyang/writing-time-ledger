@@ -76,6 +76,48 @@ input{
   width:100%;padding:10px;border:1px solid #3f6970;border-radius:4px;
   background:#07171c;color:var(--cream)
 }
+input[type="date"]{
+  color:var(--gold2);
+  background:#07171c;
+  border-color:#3f6970;
+  padding-right:46px;
+}
+input[type="date"]::-webkit-datetime-edit,
+input[type="date"]::-webkit-datetime-edit-text,
+input[type="date"]::-webkit-datetime-edit-month-field,
+input[type="date"]::-webkit-datetime-edit-day-field,
+input[type="date"]::-webkit-datetime-edit-year-field{
+  color:var(--gold2);
+}
+.date-picker-wrap{position:relative}
+.date-picker-wrap input[type="date"]::-webkit-calendar-picker-indicator{
+  opacity:0;
+  cursor:pointer;
+  width:42px;
+  height:100%;
+  position:absolute;
+  right:0;
+  top:0;
+}
+.date-picker-button{
+  position:absolute;
+  right:7px;
+  top:50%;
+  transform:translateY(-50%);
+  width:30px;
+  height:30px;
+  padding:0;
+  border:0;
+  background:transparent;
+  color:var(--cream);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  z-index:2;
+}
+.date-picker-button:hover{background:transparent}
+.date-picker-button svg{width:21px;height:21px;display:block}
 input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 2px rgba(217,181,109,.13)}
 button{
   border:1px solid rgba(217,181,109,.42);border-radius:4px;
@@ -113,11 +155,7 @@ button{
   margin-top:12px;padding:15px;background:rgba(20,59,68,.68);
   border-radius:4px;line-height:1.7;border:1px solid #3c686d
 }
-.result .plan-total{
-  display:block;margin-top:10px;padding:12px;background:#07171c;
-  border:1px solid #a4814a;border-radius:4px;text-align:center;
-  font-size:29px;font-weight:900;color:var(--gold2)
-}
+
 .pomo-summary{
   margin-top:12px;padding:13px;background:rgba(20,59,68,.7);
   border-radius:4px;text-align:center;color:#b6c7c5;border:1px solid #345d62
@@ -246,7 +284,7 @@ button{
 <h2>해룡파 청산부 기본 설정</h2>
 <div class="grid">
 <div><label>하루 최소 작업량 (시간)</label><input id="goal" type="number" min="0" step=".5" value="1"></div>
-<div><label>청산 시작일</label><input id="start" type="date"></div>
+<div><label>청산 시작일</label><div class="date-picker-wrap"><input id="start" type="date"><button class="date-picker-button" type="button" aria-label="달력 열기" onclick="openDatePicker()"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="15" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M7 3.8v4M17 3.8v4M3.8 9.5h16.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M7.5 12.5h.01M12 12.5h.01M16.5 12.5h.01M7.5 16.5h.01M12 16.5h.01" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button></div></div>
 </div>
 <div class="actions"><button class="primary" onclick="settings()">🔨 기준 박아두기</button><button class="secondary" onclick="todayStart()">오늘부터 시작</button></div>
 </section>
@@ -280,7 +318,8 @@ button{
 <div class="pomo-list" id="pomoList"></div>
 <div class="actions">
 <button class="secondary" type="button" onclick="rebuildPomo()">🔄 항해 계획 다시 짜기</button>
-<button class="danger" type="button" onclick="resetPomo()">오늘 장부 초기화</button>
+<button class="secondary" type="button" onclick="resetPomo()">오늘 장부 초기화</button>
+<button class="danger" type="button" onclick="clearTodayLocalData()">🧹 오늘 테스트 데이터 정리</button>
 </div>
 </section>
 
@@ -291,31 +330,44 @@ button{
 
 <script>
 const KEY="writing-settler-v1";
-let data=JSON.parse(localStorage.getItem(KEY)||'{"goal":1,"start":"","records":{}}');
+let data=JSON.parse(localStorage.getItem(KEY)||'{"goal":1,"start":"","records":{},"pomoRecords":{},"pomoPlans":{}}');
 const today=()=>{let d=new Date();d=new Date(d-d.getTimezoneOffset()*60000);return d.toISOString().slice(0,10)};
+data.records=data.records||{};
+data.pomoRecords=data.pomoRecords||{};
+data.pomoPlans=data.pomoPlans||{};
+// 이전 버전은 오늘 항해 장부 체크량을 records에 직접 저장했으므로, 오늘 값만 새 전용 저장소로 옮긴다.
+// 과거 날짜의 records는 기존 실제 처리 기록으로 그대로 보존한다.
+if(data.records[today()]!==undefined){
+  const oldToday=Number(data.records[today()])||0;
+  const oldPomo=Number(data.pomoRecords[today()])||0;
+  data.pomoRecords[today()]=Math.max(oldPomo,oldToday);
+  delete data.records[today()];
+  localStorage.setItem(KEY,JSON.stringify(data));
+}
 const fmt=n=>{n=Math.max(0,Number(n)||0);return Number.isInteger(n)?String(n):n.toFixed(1).replace(/\.0$/,"")};
 function calc(){
  const g=Number(data.goal)||0,s=data.start||today(),t=today();let target=0,written=0,debt=0;
  if(s<=t&&g){
    let a=new Date(s+"T00:00:00"),b=new Date(t+"T00:00:00");
    target=(Math.floor((b-a)/86400000)+1)*g;
-   const yesterday=new Date(b);
-   yesterday.setDate(yesterday.getDate()-1);
-   let yesterdayTarget=0,yesterdayWritten=0;
-   if(a<=yesterday){
-     yesterdayTarget=(Math.floor((yesterday-a)/86400000)+1)*g;
-     Object.entries(data.records).forEach(([d,v])=>{
-       if(d<=yesterday.toISOString().slice(0,10)) yesterdayWritten+=Number(v)||0;
-     });
-     debt=Math.max(0,yesterdayTarget-yesterdayWritten);
-   }
+   Object.entries(data.records).forEach(([d,v])=>{
+     if(d>=s&&d<=t) written+=Number(v)||0;
+   });
+   Object.entries(data.pomoRecords).forEach(([d,v])=>{
+     if(d>=s&&d<=t) written+=Number(v)||0;
+   });
+   debt=Math.max(0,target-written);
+ } else {
+   Object.values(data.records).forEach(v=>written+=Number(v)||0);
+   Object.values(data.pomoRecords).forEach(v=>written+=Number(v)||0);
  }
- Object.values(data.records).forEach(v=>written+=Number(v)||0);
  return {g,target,written,debt}
 }
+
 function save(){localStorage.setItem(KEY,JSON.stringify(data))}
 function settings(){data.goal=Math.max(0,Number(goal.value)||0);data.start=start.value||today();save();render()}
 function todayStart(){start.value=today()}
+function openDatePicker(){const el=document.getElementById("start");if(el.showPicker){try{el.showPicker();return}catch(e){}}el.focus()}
 function record(){let d=date.value||today();data.records[d]=Math.max(0,Number(hours.value)||0);save();render()}
 function del(d){delete data.records[d];save();render()}
 function clearRecords(){if(confirm("모든 글쓰기 기록을 지울까요?")){data.records={};save();render()}}
@@ -323,15 +375,16 @@ function renderPlan(){
  let c=calc(),n=Math.max(1,Number(days.value)||1),e=c.debt/n;
  extra.value=fmt(e)+"시간";
  plan.innerHTML=c.debt<=0?"<b>미납 없어. 제법 깔끔하게 처리했네. 👏</b><br>이제 하루 기본량만 지키면 돼. 🎉":
- "<b>"+fmt(c.debt)+"시간</b>을 "+n+"일 동안 갚으려면<br>하루에 평균 <b>"+fmt(e)+"시간</b>을 기본량에 추가해서 처리해.<span class=\"plan-total\">하루 총 처리량<br>"+fmt(c.g+e)+"시간</span>";
+ "<b>"+fmt(c.debt)+"시간</b>을 "+n+"일 동안 갚으려면<br>하루에 평균 <b>"+fmt(e)+"시간</b>을 기본량에 추가해서 처리해.";
 }
 function getPomoGoalMinutes(){
  const c=calc();
- const n=Math.max(1,Number(document.getElementById("days").value)||1);
- return Math.max(0,Math.round((c.g+(c.debt/n))*60));
+ const n=Math.max(1,Number(days.value)||1);
+ const planned=c.g+(c.debt/n);
+ return Math.max(0,Math.round(planned*60));
 }
 function getPomoKey(){
- return "pomo-"+today()+"-goal-"+getPomoGoalMinutes();
+ return "pomo-"+today();
 }
 function getPomoDone(){
  try{return JSON.parse(localStorage.getItem(getPomoKey())||"[]")}catch(e){return []}
@@ -339,17 +392,44 @@ function getPomoDone(){
 function setPomoDone(arr){
  localStorage.setItem(getPomoKey(),JSON.stringify(arr));
 }
+function getPomoPlanMinutes(){
+ const key=today();
+ const saved=Number(data.pomoPlans[key]);
+ return Number.isFinite(saved)&&saved>=0?saved:getPomoGoalMinutes();
+}
+function setPomoPlanMinutes(minutes){
+ data.pomoPlans[today()]=Math.max(0,Math.round(minutes));
+ save();
+}
 function clearOldPomoForToday(){
  const prefix="pomo-"+today()+"-goal-";
  Object.keys(localStorage).forEach(k=>{if(k.startsWith(prefix))localStorage.removeItem(k)});
 }
 function resetPomo(){
- if(confirm("오늘의 항해 장부 체크 목록을 처음부터 다시 만들까요?")){
+ if(confirm("오늘의 항해 장부 체크 목록만 초기화할까요?\n수동으로 입력한 실제 처리량 기록은 그대로 남습니다.")){
    localStorage.removeItem(getPomoKey());
-   renderPomodoro(getPomoGoalMinutes()/60);
+   // 항해 장부 처리량은 체크 상태에서 계산되는 값이므로 함께 0으로 되돌린다.
+   // 수동 실제 기록(data.records)은 그대로 보존한다.
+   delete data.pomoRecords[today()];
+   save();
+   render();
+ }
+}
+function clearTodayLocalData(){
+ if(confirm("오늘 테스트하면서 저장된 체크·실제 처리량 데이터를 모두 지울까요?\n청산 시작일과 하루 목표 설정은 그대로 유지됩니다.")){
+   delete data.records[today()];
+   delete data.pomoRecords[today()];
+   delete data.pomoPlans[today()];
+   localStorage.removeItem(getPomoKey());
+   clearOldPomoForToday();
+   save();
+   render();
  }
 }
 function rebuildPomo(){
+ // 계획을 다시 짜는 경우에만 오늘의 기준 시간을 새로 계산한다.
+ setPomoPlanMinutes(getPomoGoalMinutes());
+ localStorage.removeItem(getPomoKey());
  clearOldPomoForToday();
  render();
 }
@@ -408,28 +488,45 @@ function celebrate(){
  document.body.appendChild(box); setTimeout(()=>box.remove(),5000);
 }
 function togglePomo(index){
- const totalHours=getPomoGoalMinutes()/60;
- const totalMinutes=Math.max(0,Math.round(totalHours*60));
+ const totalMinutes=getPomoPlanMinutes();
  const count=Math.ceil(totalMinutes/30);
  let done=getPomoDone().filter(i=>Number.isInteger(i)&&i>=0&&i<count);
  if(done.includes(index)) done=done.filter(i=>i!==index);
  else done.push(index);
  setPomoDone(done);
- renderPomodoro(totalHours);
- if(done.length===count && count>0) celebrate();
+
+ // 항해 장부에서 체크된 시간은 '오늘의 항해 회수량'으로 저장한다.
+ // 체크 = 해당 칸 시간만큼 증가, 체크 해제 = 해당 칸 시간만큼 감소한다.
+ // 실제 기록(data.records)과 분리하므로 서로 덮어쓰거나 중복 계산하지 않는다.
+ const checkedMinutes=done.reduce((sum,i)=>
+   sum+Math.min(30,Math.max(0,totalMinutes-i*30)),0);
+ data.pomoRecords[today()]=checkedMinutes/60;
+ save();
+
+ // 같은 날짜의 누적 의무량은 그대로이고,
+ // 실제 처리량이 증가한 만큼 현재 미납과 오늘 청산량이 즉시 다시 계산된다.
+ const allDone=done.length===count&&count>0;
+ render();
+ if(allDone) celebrate();
 }
+
 function render(){
  let c=calc();tg.textContent=fmt(c.target)+"h";tw.textContent=fmt(c.written)+"h";debt.textContent=fmt(c.debt)+"h";
  todayGoal.textContent=fmt(c.g)+"시간";
  let planDays=Math.max(1,Number(days.value)||1),extraToday=c.debt/planDays;
  todayTotal.textContent=fmt(c.g+extraToday)+"시간";
- let w=Number(data.records[today()])||0;
+ const manual=Number(data.records[today()])||0;
+ const pomo=Number(data.pomoRecords[today()])||0;
+ const w=manual+pomo;
  todayStatus.textContent=w===0?"오늘 아직 처리 내역이 없어.":w>=c.g?"오늘 "+fmt(w)+"시간 처리 완료. 기본 할당량은 털었소!":"오늘 "+fmt(w)+"시간 처리했어 · "+fmt(c.g-w)+"시간 더 처리해야 해.";
- history.innerHTML=Object.keys(data.records).sort().reverse().map(d=>'<div class="row"><div>'+d+'</div><div>'+fmt(data.records[d])+'시간</div><button class="danger" onclick="del(\''+d+'\')">삭제</button></div>').join("")||'<div class="empty">아직 처리 기록이 없어.</div>';
  renderPlan();
- let todayPlan=c.g+(c.debt/Math.max(1,Number(days.value)||1));
- renderPomodoro(todayPlan);
+ let savedPlan=data.pomoPlans[today()];
+ if(savedPlan===undefined){
+   setPomoPlanMinutes(getPomoGoalMinutes());
+ }
+ renderPomodoro(getPomoPlanMinutes()/60);
 }
-goal.value=data.goal||1;start.value=data.start||today();date.value=today();render();
+
+goal.value=data.goal||1;start.value=data.start||today();render();
 </script>
 </body></html>
